@@ -21,7 +21,6 @@ func (n *Note) Add(basePath string) error {
     }
 
 	path := fmt.Sprintf("%s/%s.json", basePath, n.CreatedAt)
-	fmt.Println(path)
 	if err := os.WriteFile(path, nj, 0644); err != nil {
 		return fmt.Errorf("could not write note to file")
 	}

@@ -1,62 +1,164 @@
 package main
 
 import (
-	"fmt"
-	"log"
-
-	"github.com/Zatfer17/zurg/internal/config"
+    "fmt"
+    "github.com/gdamore/tcell/v2"
+    "github.com/rivo/tview"
     "github.com/Zatfer17/zurg/pkg/core"
+    "github.com/Zatfer17/zurg/internal/config"
 )
 
 func main() {
-
+    app := tview.NewApplication()
+    
     cfg, err := config.InitConfig()
     if err != nil {
-        log.Fatal(err)
+        panic(err)
     }
 
-    var tags []string
-    err = core.Add(cfg.DefaultPath, tags, "This is a test")
-    if err != nil {
-        log.Fatal(err)
+    searchBar := tview.NewInputField()
+    searchBar.SetLabel("Search: ").
+        SetFieldWidth(0).
+        SetBorder(true)
+
+    listView := tview.NewList().
+        ShowSecondaryText(false)
+    listView.SetTitle("Notes").
+        SetBorder(true)
+
+    textArea := tview.NewTextArea().
+        SetText("", false)
+    textArea.SetTitle("Note").
+        SetBorder(true)
+
+    updateNotes := func(searchText string) {
+        notes, err := core.List(cfg.DefaultPath, searchText)
+        if err != nil {
+            panic(err)
+        }
+
+        listView.Clear()
+        for i, note := range notes {
+            preview := note.Content
+            if len(preview) > 50 {
+                preview = preview[:47] + "..."
+            }
+            listView.AddItem(fmt.Sprintf("(%s) - %s", note.CreatedAt, preview), "", 0, func() {
+                textArea.SetText(notes[i].Content, true)
+            })
+        }
+
+        if len(notes) > 0 {
+            listView.SetCurrentItem(0)
+            textArea.SetText(notes[0].Content, true)
+        } else {
+            textArea.SetText("", false)
+        }
     }
 
-    notes, err := core.List(cfg.DefaultPath)
-    if err != nil {
-        log.Fatal(err)
+    updateNotes("")
+
+    searchBar.SetChangedFunc(func(text string) {
+        updateNotes(text)
+    })
+
+    searchBar.SetDoneFunc(func(key tcell.Key) {
+        if key == tcell.KeyEnter {
+            notes, _ := core.List(cfg.DefaultPath, searchBar.GetText())
+            if len(notes) == 0 {
+                textArea.SetText(searchBar.GetText(), true)
+                app.SetFocus(textArea)
+            } else {
+                app.SetFocus(listView)
+            }
+        }
+    })
+
+    listView.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
+        notes, _ := core.List(cfg.DefaultPath, searchBar.GetText())
+        if index >= 0 && index < len(notes) {
+            textArea.SetText(notes[index].Content, true)
+        }
+    })
+
+    listView.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+        if event.Key() == tcell.KeyEnter {
+            app.SetFocus(textArea)
+            return nil
+        }
+        return event
+    })
+
+    footer := tview.NewTextView().
+        SetText("^S Save • ^K Search").
+        SetTextAlign(tview.AlignCenter)
+    footer.SetBorder(true)
+
+    grid := tview.NewGrid().
+        SetRows(-1, -5, -9, 3).
+        SetColumns(0).
+        SetBorders(false).
+        AddItem(searchBar, 0, 0, 1, 1, 0, 0, true).
+        AddItem(listView, 1, 0, 1, 1, 0, 0, false).
+        AddItem(textArea, 2, 0, 1, 1, 0, 0, false).
+        AddItem(footer, 3, 0, 1, 1, 0, 0, false)
+
+    app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+        switch event.Key() {
+        case tcell.KeyTab:
+            if searchBar.HasFocus() {
+                app.SetFocus(listView)
+            } else if listView.HasFocus() {
+                app.SetFocus(textArea)
+            } else {
+                app.SetFocus(searchBar)
+            }
+            return nil
+        case tcell.KeyBacktab:
+            if searchBar.HasFocus() {
+                app.SetFocus(textArea)
+            } else if listView.HasFocus() {
+                app.SetFocus(searchBar)
+            } else {
+                app.SetFocus(listView)
+            }
+            return nil
+        case tcell.KeyCtrlK:
+            app.SetFocus(searchBar)
+            return nil
+        case tcell.KeyCtrlS:
+            content := textArea.GetText()
+            currentIndex := listView.GetCurrentItem()
+            notes, _ := core.List(cfg.DefaultPath, searchBar.GetText())
+            
+            var err error
+            if currentIndex >= 0 && currentIndex < len(notes) {
+                existingNote := notes[currentIndex]
+                err = core.Edit(
+                    cfg.DefaultPath,
+                    existingNote.CreatedAt,
+                    existingNote.Tags,
+                    content,
+                )
+            } else {
+                err = core.Add(
+                    cfg.DefaultPath,
+                    []string{},
+                    content,
+                )
+            }
+
+            if err != nil {
+                panic(err)
+            }
+
+            updateNotes(searchBar.GetText())
+            return nil
+        }
+        return event
+    })
+
+    if err := app.SetRoot(grid, true).EnableMouse(true).Run(); err != nil {
+        panic(err)
     }
-
-    //fmt.Println(notes)
-
-    notes, err = core.Search(cfg.DefaultPath, "note")
-    if err != nil {
-        log.Fatal(err)
-    }
-
-    fmt.Println(notes)
-
-    err = core.Remove(cfg.DefaultPath, notes[0].CreatedAt)
-    if err != nil {
-        log.Fatal(err)
-    }
-
-    notes, err = core.Search(cfg.DefaultPath, "note")
-    if err != nil {
-        log.Fatal(err)
-    }
-
-    fmt.Println(notes)
-
-    err = core.Edit(cfg.DefaultPath, notes[0].CreatedAt, tags, "This is a testooooo")
-    if err != nil {
-        log.Fatal(err)
-    }
-
-    notes, err = core.Search(cfg.DefaultPath, "testooooo")
-    if err != nil {
-        log.Fatal(err)
-    }
-
-    fmt.Println(notes)
-
 }
