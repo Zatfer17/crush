@@ -90,12 +90,12 @@ func main() {
     })
 
     footer := tview.NewTextView().
-        SetText("^S Save • ^K Search").
+        SetText("CTRL-K Search • CTRL-S Save • SHIFT-DEL Delete").
         SetTextAlign(tview.AlignCenter)
     footer.SetBorder(true)
 
     grid := tview.NewGrid().
-        SetRows(-1, -5, -9, 3).
+        SetRows(3, -2, -3, 3).
         SetColumns(0).
         SetBorders(false).
         AddItem(searchBar, 0, 0, 1, 1, 0, 0, true).
@@ -126,6 +126,25 @@ func main() {
         case tcell.KeyCtrlK:
             app.SetFocus(searchBar)
             return nil
+        case tcell.KeyDelete:
+            if event.Modifiers()&tcell.ModShift != 0 {
+                currentIndex := listView.GetCurrentItem()
+                notes, _ := core.List(cfg.DefaultPath, searchBar.GetText())
+                
+                if currentIndex >= 0 && currentIndex < len(notes) {
+                    existingNote := notes[currentIndex]
+                    err := core.Remove(
+                        cfg.DefaultPath,
+                        existingNote.CreatedAt,
+                    )
+                    if err != nil {
+                        panic(err)
+                    }
+                    updateNotes(searchBar.GetText())
+                }
+                return nil
+            }
+            return event
         case tcell.KeyCtrlS:
             content := textArea.GetText()
             currentIndex := listView.GetCurrentItem()
