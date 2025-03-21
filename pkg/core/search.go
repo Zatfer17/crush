@@ -9,7 +9,7 @@ import (
 	"github.com/Zatfer17/zurg/internal/note"
 )
 
-func SearchNote(basePath string, content string) ([]note.Note, error) {
+func Search(basePath string, content string) ([]note.Note, error) {
 
 	var notes []note.Note
 

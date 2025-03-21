@@ -2,14 +2,12 @@ package config
 
 import (
 	"encoding/json"
-	"errors"
 	"os"
 	"path/filepath"
 )
 
 type Config struct {
 	DefaultPath     string `json:"defaultPath"`
-	DefaultBookName string `json:"defaultBookName"`
 }
 
 func InitConfig() (*Config, error) {
@@ -31,10 +29,7 @@ func InitConfig() (*Config, error) {
 	}
 
 	if config.DefaultPath == "" {
-		return nil, errors.New("config key 'defaultPath' is missing")
-	}
-	if config.DefaultBookName == "" {
-		return nil, errors.New("config key 'defaultBookName' is missing")
+		return nil, err
 	}
 
 	return &config, nil

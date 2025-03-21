@@ -7,9 +7,9 @@ import (
 )
 
 type Note struct {
-	Book      string
 	CreatedAt string
 	UpdatedAt string
+	Tags      []string
 	Content   string
 }
 
@@ -20,7 +20,8 @@ func (n *Note) Add(basePath string) error {
         return fmt.Errorf("could not marshal note")
     }
 
-	path := fmt.Sprintf("%s/%s/%s.json", basePath, n.Book, n.CreatedAt)
+	path := fmt.Sprintf("%s/%s.json", basePath, n.CreatedAt)
+	fmt.Println(path)
 	if err := os.WriteFile(path, nj, 0644); err != nil {
 		return fmt.Errorf("could not write note to file")
 	}
