@@ -137,13 +137,11 @@ func main() {
                 err = core.Edit(
                     cfg.DefaultPath,
                     existingNote.CreatedAt,
-                    existingNote.Tags,
                     content,
                 )
             } else {
                 err = core.Add(
                     cfg.DefaultPath,
-                    []string{},
                     content,
                 )
             }

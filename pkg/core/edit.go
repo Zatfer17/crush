@@ -9,8 +9,8 @@ import (
     "github.com/Zatfer17/zurg/internal/note"
 )
 
-func Edit(basePath string, createdAt string, tags []string, noteContent string) error {
-	
+func Edit(basePath string, createdAt string, noteContent string) error {
+
     path := fmt.Sprintf("%s/%s.json", basePath, createdAt)
 
     data, err := os.ReadFile(path)
@@ -23,7 +23,6 @@ func Edit(basePath string, createdAt string, tags []string, noteContent string) 
         return err
     }
 
-    n.Tags = tags
     n.Content = noteContent
     n.UpdatedAt = time.Now().Local().Truncate(time.Second).Format(time.RFC3339)
 

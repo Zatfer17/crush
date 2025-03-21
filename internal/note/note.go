@@ -9,7 +9,6 @@ import (
 type Note struct {
 	CreatedAt string
 	UpdatedAt string
-	Tags      []string
 	Content   string
 }
 
