@@ -6,7 +6,7 @@ import (
 	"github.com/Zatfer17/zurg/internal/note"
 )
 
-func Add(basePath string, noteContent string) error {
+func Add(basePath string, baseWorkspace string, noteContent string) error {
 
 	ts := time.Now().Local().Truncate(time.Second).Format(time.RFC3339)
 	
@@ -16,7 +16,7 @@ func Add(basePath string, noteContent string) error {
 		Content  : noteContent,
 	}
 
-	err := n.Add(basePath)
+	err := n.Add(basePath, baseWorkspace)
 	if err != nil {
 		return err
 	}

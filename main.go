@@ -32,7 +32,7 @@ func main() {
         SetBorder(true)
 
     updateNotes := func(searchText string) {
-        notes, err := core.List(cfg.DefaultPath, searchText)
+        notes, err := core.List(cfg.DefaultPath, cfg.DefaultWorkspace, searchText)
         if err != nil {
             panic(err)
         }
@@ -64,7 +64,7 @@ func main() {
 
     searchBar.SetDoneFunc(func(key tcell.Key) {
         if key == tcell.KeyEnter {
-            notes, _ := core.List(cfg.DefaultPath, searchBar.GetText())
+            notes, _ := core.List(cfg.DefaultPath, cfg.DefaultWorkspace, searchBar.GetText())
             if len(notes) == 0 {
                 textArea.SetText(searchBar.GetText(), true)
                 app.SetFocus(textArea)
@@ -75,7 +75,7 @@ func main() {
     })
 
     listView.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
-        notes, _ := core.List(cfg.DefaultPath, searchBar.GetText())
+        notes, _ := core.List(cfg.DefaultPath, cfg.DefaultWorkspace, searchBar.GetText())
         if index >= 0 && index < len(notes) {
             textArea.SetText(notes[index].Content, true)
         }
@@ -90,7 +90,7 @@ func main() {
     })
 
     footer := tview.NewTextView().
-        SetText("CTRL-K Search • CTRL-S Save • SHIFT-DEL Delete").
+        SetText("CTRL-N New • CTRL-K Search • CTRL-S Save • SHIFT-DEL Delete").
         SetTextAlign(tview.AlignCenter)
     footer.SetBorder(true)
 
@@ -123,18 +123,32 @@ func main() {
                 app.SetFocus(listView)
             }
             return nil
+        case tcell.KeyCtrlN:
+            err = core.Add(
+                cfg.DefaultPath,
+                cfg.DefaultWorkspace,
+                searchBar.GetText(),
+            )
+            if err != nil {
+                panic(err)
+            }
+            updateNotes(searchBar.GetText())
+            listView.SetCurrentItem(0)
+            app.SetFocus(textArea)
+            return nil
         case tcell.KeyCtrlK:
             app.SetFocus(searchBar)
             return nil
         case tcell.KeyDelete:
             if event.Modifiers()&tcell.ModShift != 0 {
                 currentIndex := listView.GetCurrentItem()
-                notes, _ := core.List(cfg.DefaultPath, searchBar.GetText())
+                notes, _ := core.List(cfg.DefaultPath, cfg.DefaultWorkspace, searchBar.GetText())
                 
                 if currentIndex >= 0 && currentIndex < len(notes) {
                     existingNote := notes[currentIndex]
                     err := core.Remove(
                         cfg.DefaultPath,
+                        cfg.DefaultWorkspace,
                         existingNote.CreatedAt,
                     )
                     if err != nil {
@@ -148,19 +162,21 @@ func main() {
         case tcell.KeyCtrlS:
             content := textArea.GetText()
             currentIndex := listView.GetCurrentItem()
-            notes, _ := core.List(cfg.DefaultPath, searchBar.GetText())
+            notes, _ := core.List(cfg.DefaultPath, cfg.DefaultWorkspace, searchBar.GetText())
             
             var err error
             if currentIndex >= 0 && currentIndex < len(notes) {
                 existingNote := notes[currentIndex]
                 err = core.Edit(
                     cfg.DefaultPath,
+                    cfg.DefaultWorkspace,
                     existingNote.CreatedAt,
                     content,
                 )
             } else {
                 err = core.Add(
                     cfg.DefaultPath,
+                    cfg.DefaultWorkspace,
                     content,
                 )
             }

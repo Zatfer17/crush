@@ -9,9 +9,9 @@ import (
     "github.com/Zatfer17/zurg/internal/note"
 )
 
-func Edit(basePath string, createdAt string, noteContent string) error {
+func Edit(basePath string, baseWorkspace string, createdAt string, noteContent string) error {
 
-    path := fmt.Sprintf("%s/%s.json", basePath, createdAt)
+    path := fmt.Sprintf("%s/%s/%s.json", basePath, baseWorkspace, createdAt)
 
     data, err := os.ReadFile(path)
     if err != nil {

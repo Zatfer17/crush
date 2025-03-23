@@ -12,12 +12,15 @@ import (
 	"github.com/Zatfer17/zurg/internal/note"
 )
 
-func List(basePath string, content string) ([]note.Note, error) {
+func List(basePath string, baseWorkspace string, content string) ([]note.Note, error) {
     var notes []note.Note
     var files []string
 
     if content != "" {
-        cmd := exec.Command("grep", "-ril", content, "--include=*.json", basePath)
+
+        path := fmt.Sprintf("%s/%s", basePath, baseWorkspace)
+
+        cmd := exec.Command("grep", "-ril", content, "--include=*.json", path)
         output, err := cmd.Output()
         if err != nil {
             if exitError, ok := err.(*exec.ExitError); ok && exitError.ExitCode() == 1 {
@@ -28,7 +31,7 @@ func List(basePath string, content string) ([]note.Note, error) {
         }
         files = strings.FieldsFunc(string(output), func(r rune) bool { return r == '\n' })
     } else {
-        pattern := fmt.Sprintf("%s/*.json", basePath)
+        pattern := fmt.Sprintf("%s/%s/*.json", basePath, baseWorkspace)
         var err error
         files, err = filepath.Glob(pattern)
         if err != nil {
