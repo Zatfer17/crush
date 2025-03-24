@@ -12,15 +12,13 @@ import (
 	"github.com/Zatfer17/zurg/internal/note"
 )
 
-func List(basePath string, baseWorkspace string, content string) ([]note.Note, error) {
+func List(basePath string, content string) ([]note.Note, error) {
     var notes []note.Note
     var files []string
 
     if content != "" {
 
-        path := fmt.Sprintf("%s/%s", basePath, baseWorkspace)
-
-        cmd := exec.Command("grep", "-ril", content, "--include=*.json", path)
+        cmd := exec.Command("grep", "-ril", content, "--include=*.json", basePath)
         output, err := cmd.Output()
         if err != nil {
             if exitError, ok := err.(*exec.ExitError); ok && exitError.ExitCode() == 1 {
@@ -30,16 +28,15 @@ func List(basePath string, baseWorkspace string, content string) ([]note.Note, e
             }
         }
         files = strings.FieldsFunc(string(output), func(r rune) bool { return r == '\n' })
+
     } else {
-        pattern := fmt.Sprintf("%s/%s/*.json", basePath, baseWorkspace)
+        pattern := fmt.Sprintf("%s/*.json", basePath)
         var err error
         files, err = filepath.Glob(pattern)
         if err != nil {
             return nil, err
         }
     }
-
-    sort.Sort(sort.Reverse(sort.StringSlice(files)))
 
     for _, file := range files {
         f, err := os.ReadFile(file)
@@ -56,7 +53,9 @@ func List(basePath string, baseWorkspace string, content string) ([]note.Note, e
         notes = append(notes, n)
     }
 
-    return notes, nil
-}
+    sort.Slice(notes, func(i, j int) bool {
+        return notes[i].CreatedAt > notes[j].CreatedAt
+    })
 
-	
+    return notes, nil
+}	

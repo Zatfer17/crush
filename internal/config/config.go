@@ -8,7 +8,6 @@ import (
 
 type Config struct {
 	DefaultPath      string `json:"defaultPath"`
-	DefaultWorkspace string `json:"defaultWorkspace"`
 }
 
 func InitConfig() (*Config, error) {
@@ -30,10 +29,6 @@ func InitConfig() (*Config, error) {
 	}
 
 	if config.DefaultPath == "" {
-		return nil, err
-	}
-
-	if config.DefaultWorkspace == "" {
 		return nil, err
 	}
 

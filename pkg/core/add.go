@@ -2,24 +2,37 @@ package core
 
 import (
 	"time"
-	
+	"hash/fnv"
+    "fmt"
+
 	"github.com/Zatfer17/zurg/internal/note"
 )
 
-func Add(basePath string, baseWorkspace string, noteContent string) error {
+func createHash(s string) string {
+    h := fnv.New32a()
+    h.Write([]byte(s))
+    return fmt.Sprintf("%04x", h.Sum32())[0:4]
+}
 
-	ts := time.Now().Local().Truncate(time.Second).Format(time.RFC3339)
-	
-	n := note.Note{
-		CreatedAt: ts,
-		UpdatedAt: ts,
-		Content  : noteContent,
-	}
+func Add(basePath string, noteContent string) error {
 
-	err := n.Add(basePath, baseWorkspace)
-	if err != nil {
-		return err
-	}
+    ts        := time.Now()
+    dateStr   := ts.Format("20060102")
+    timestamp := ts.Format(time.RFC3339)
+    hash      := createHash(timestamp)
+    noteId    := fmt.Sprintf("%s-%s", dateStr, hash)
+    
+    n := note.Note{
+        Id:        noteId,
+        CreatedAt: timestamp,
+        UpdatedAt: timestamp,
+        Content:   noteContent,
+    }
 
-	return err
+    err := n.Add(basePath)
+    if err != nil {
+        return err
+    }
+
+    return nil
 }

@@ -9,9 +9,9 @@ import (
     "github.com/Zatfer17/zurg/internal/note"
 )
 
-func Edit(basePath string, baseWorkspace string, createdAt string, noteContent string) error {
+func Edit(basePath string, Id string, noteContent string) error {
 
-    path := fmt.Sprintf("%s/%s/%s.json", basePath, baseWorkspace, createdAt)
+    path := fmt.Sprintf("%s/%s.json", basePath, Id)
 
     data, err := os.ReadFile(path)
     if err != nil {
@@ -24,7 +24,7 @@ func Edit(basePath string, baseWorkspace string, createdAt string, noteContent s
     }
 
     n.Content = noteContent
-    n.UpdatedAt = time.Now().Local().Truncate(time.Second).Format(time.RFC3339)
+    n.UpdatedAt = time.Now().Format(time.RFC3339)
 
     updatedData, err := json.Marshal(n)
     if err != nil {
