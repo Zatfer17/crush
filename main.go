@@ -9,12 +9,81 @@ import (
     "github.com/Zatfer17/zurg/pkg/core"
 )
 
+func getNotes(cfg config.Config, searchText string, notesView *tview.List, noteView *tview.TextArea) {
+
+    notesView.Clear()
+
+    notes, err := core.List(cfg.DefaultPath, searchText)
+    if err != nil {
+        panic(err)
+    }
+
+    for _, note := range notes {
+        preview := note.Content
+        if len(preview) > 50 {
+            preview = preview[:47] + "..."
+        }
+        notesView.AddItem(fmt.Sprintf("[%s] %s", note.Id, preview), "", 0, func() {
+            noteView.SetTitle(note.Id)
+            noteView.SetText(note.Content, true)
+        })
+    }
+}
+
+func addNote(cfg config.Config, noteContent string, app *tview.Application, noteView *tview.TextArea) {
+
+    err := core.Add(
+        cfg.DefaultPath,
+        noteContent,
+    )
+    if err != nil {
+        panic(err)
+    }
+
+    noteView.SetText(noteContent, true)
+
+    app.SetFocus(noteView)
+
+}
+
+func editNote(cfg config.Config, noteView *tview.TextArea) {
+
+    err := core.Edit(
+        cfg.DefaultPath,
+        noteView.GetTitle(),
+        noteView.GetText(),
+    )
+    if err != nil {
+        panic(err)
+    }
+
+}
+
+func removeNote(cfg config.Config, noteView *tview.TextArea) {
+
+    if noteView.GetTitle() != "" {
+        err := core.Remove(
+            cfg.DefaultPath,
+            noteView.GetTitle(),
+        )
+        if err != nil {
+            panic(err)
+        }
+    
+        noteView.SetTitle("")
+        noteView.SetText("", true)
+    }
+
+}
+
 func main() {
 
     cfg, err := config.InitConfig()
     if err != nil {
         panic(err)
     }
+
+    // CREATE WIDGETS
 
     app := tview.NewApplication()
 
@@ -32,11 +101,11 @@ func main() {
     notesView.SetTitle("Notes")
     notesView.ShowSecondaryText(false)
 
-    noteView := tview.NewTextView()
+    noteView := tview.NewTextArea()
     noteView.SetBorder(true)
 
     footer := tview.NewTextView()
-    footer.SetText("CTRL-N New • CTRL-K Search • CTRL-S Save • CTRL-DEL Delete")
+    footer.SetText("CTRL-N New • CTRL-K Search • CTRL-S Save • SHIFT-DEL Delete")
     footer.SetTextAlign(tview.AlignCenter)
     footer.SetBorder(true)
 
@@ -50,9 +119,11 @@ func main() {
     grid.AddItem(notesView, 1, 4, 2, 6, 0, 0, false)
     grid.AddItem(noteView, 3, 0, 3, 10, 0, 0, false)
     
-    grid.AddItem(collectionsView, 1, 0, 5, 2, 0, 100, false)
-    grid.AddItem(notesView, 1, 2, 5, 3, 0, 100, false)
-    grid.AddItem(noteView, 1, 5, 5, 5, 0, 100, false)
+    grid.AddItem(collectionsView, 1, 0, 5, 2, 0, 150, false)
+    grid.AddItem(notesView, 1, 2, 5, 3, 0, 150, false)
+    grid.AddItem(noteView, 1, 5, 5, 5, 0, 150, false)
+
+    // ASSIGN SHORTCUTS
 
     app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
         switch event.Key() {
@@ -78,37 +149,42 @@ func main() {
                     app.SetFocus(notesView)
                 } 
                 return nil
-            }
+            case tcell.KeyCtrlK:
+                app.SetFocus(searchBar)
+                return nil
+            case tcell.KeyCtrlN:
+                addNote(*cfg, "", app, noteView)
+                getNotes(*cfg, searchBar.GetText(), notesView, noteView)
+                return nil
+            case tcell.KeyCtrlS:
+                editNote(*cfg, noteView)
+                getNotes(*cfg, searchBar.GetText(), notesView, noteView)
+                return nil
+            case tcell.KeyDelete:
+                if event.Modifiers()&tcell.ModShift != 0 {
+                    removeNote(*cfg, noteView)
+                    getNotes(*cfg, searchBar.GetText(), notesView, noteView)
+                    return nil
+                }
+        }
         return event
     })
 
-    updateNotes := func(searchText string) {
+    // ASSIGN FUNCTIONALITY
 
-        notes, err := core.List(cfg.DefaultPath, searchText)
-        if err != nil {
-            panic(err)
-        }
+    searchBar.SetChangedFunc(func(searchText string) {
+        getNotes(*cfg, searchText, notesView, noteView)
+    })
 
-        noteView.Clear()
-        for i, note := range notes {
-            preview := note.Content
-            if len(preview) > 50 {
-                preview = preview[:47] + "..."
-            }
-            notesView.AddItem(fmt.Sprintf("[%s] %s", note.Id, preview), "", 0, func() {noteView.SetText(notes[i].Content)})
-        }
+    searchBar.SetDoneFunc(func(key tcell.Key){
+        addNote(*cfg, searchBar.GetText(), app, noteView)
+        getNotes(*cfg, searchBar.GetText(), notesView, noteView)
+    })
 
-        if len(notes) > 0 {
-            notesView.SetCurrentItem(0)
-            noteView.SetText(notes[0].Content)
-        } else {
-            noteView.Clear()
-        }
-    }
-
-    updateNotes(searchBar.GetText())
+    getNotes(*cfg, "", notesView, noteView)
 
     if err := app.SetRoot(grid, true).EnableMouse(true).Run(); err != nil {
         panic(err)
     }
+
 }
