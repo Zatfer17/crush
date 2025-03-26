@@ -14,7 +14,7 @@ func createHash(s string) string {
     return fmt.Sprintf("%04x", h.Sum32())[0:4]
 }
 
-func Add(basePath string, noteContent string) error {
+func Add(basePath string, noteContent string) (note.Note, error) {
 
     ts        := time.Now()
     dateStr   := ts.Format("20060102")
@@ -29,10 +29,10 @@ func Add(basePath string, noteContent string) error {
         Content:   noteContent,
     }
 
-    err := n.Add(basePath)
+    err := n.Write(basePath)
     if err != nil {
-        return err
+        return note.Note{}, err
     }
 
-    return nil
+    return n, nil
 }

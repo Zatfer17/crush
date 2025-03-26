@@ -2,12 +2,43 @@ package main
 
 import (
     "fmt"
+    "path/filepath"
     "github.com/rivo/tview"
     "github.com/gdamore/tcell/v2"
 
     "github.com/Zatfer17/zurg/internal/config"
     "github.com/Zatfer17/zurg/pkg/core"
 )
+
+func getCollections(cfg config.Config, collectionsView *tview.List, searchBar *tview.InputField) {
+
+    fullPath := filepath.Join(cfg.DefaultPath, ".queries")
+
+    collectionsView.Clear()
+
+    notes, err := core.List(fullPath, "")
+    if err != nil {
+        panic(err)
+    }
+
+    for _, note := range notes {
+        collectionsView.AddItem(note.Content, "", 0, func(){
+            searchBar.SetText(note.Content)
+        })
+    }
+}
+
+func addCollection(cfg config.Config, query string) {
+
+    _, err := core.Save(
+        cfg.DefaultPath,
+        query,
+    )
+    if err != nil {
+        panic(err)
+    }
+
+}
 
 func getNotes(cfg config.Config, searchText string, notesView *tview.List, noteView *tview.TextArea) {
 
@@ -32,7 +63,7 @@ func getNotes(cfg config.Config, searchText string, notesView *tview.List, noteV
 
 func addNote(cfg config.Config, noteContent string, app *tview.Application, noteView *tview.TextArea) {
 
-    err := core.Add(
+    n, err := core.Add(
         cfg.DefaultPath,
         noteContent,
     )
@@ -40,7 +71,8 @@ func addNote(cfg config.Config, noteContent string, app *tview.Application, note
         panic(err)
     }
 
-    noteView.SetText(noteContent, true)
+    noteView.SetTitle(n.Id)
+    noteView.SetText(n.Content, true)
 
     app.SetFocus(noteView)
 
@@ -105,7 +137,7 @@ func main() {
     noteView.SetBorder(true)
 
     footer := tview.NewTextView()
-    footer.SetText("CTRL-N New • CTRL-K Search • CTRL-S Save • SHIFT-DEL Delete")
+    footer.SetText("CTRL-N New • CTRL-K Search • CTRL-S Save • CTRL-W Save query • SHIFT-DEL Delete")
     footer.SetTextAlign(tview.AlignCenter)
     footer.SetBorder(true)
 
@@ -160,6 +192,10 @@ func main() {
                 editNote(*cfg, noteView)
                 getNotes(*cfg, searchBar.GetText(), notesView, noteView)
                 return nil
+            case tcell.KeyCtrlW:
+                addCollection(*cfg, searchBar.GetText())
+                getCollections(*cfg, collectionsView, searchBar)
+                return nil
             case tcell.KeyDelete:
                 if event.Modifiers()&tcell.ModShift != 0 {
                     removeNote(*cfg, noteView)
@@ -181,6 +217,7 @@ func main() {
         getNotes(*cfg, searchBar.GetText(), notesView, noteView)
     })
 
+    getCollections(*cfg, collectionsView, searchBar)
     getNotes(*cfg, "", notesView, noteView)
 
     if err := app.SetRoot(grid, true).EnableMouse(true).Run(); err != nil {

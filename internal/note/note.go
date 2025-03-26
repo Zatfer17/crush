@@ -1,10 +1,17 @@
 package note
 
 import (
-	"encoding/json"
+	"path/filepath"
 	"os"
 	"fmt"
 )
+
+var TEMPLATE = `---
+id: %s
+created: %s
+updated: %s
+---
+%s`
 
 type Note struct {
 	Id        string
@@ -13,18 +20,25 @@ type Note struct {
 	Content   string
 }
 
-func (n *Note) Add(basePath string) error {
+func (note Note) GetName() string {
+	return fmt.Sprintf("%s.md", note.Id)
+}
 
-	nj, err := json.Marshal(n)
-    if err != nil {
-        return fmt.Errorf("could not marshal note")
-    }
+func (note Note) Format() string {
+	return fmt.Sprintf(TEMPLATE, note.Id, note.CreatedAt, note.UpdatedAt, note.Content)
+}
 
-	path := fmt.Sprintf("%s/%s.json", basePath, n.Id)
-	if err := os.WriteFile(path, nj, 0644); err != nil {
-		return fmt.Errorf("could not write note to file")
+func (note Note) Write(basePath string) error {
+
+	filePath := filepath.Join(basePath, note.GetName())
+
+	f, err := os.Create(filePath)
+	if err != nil {
+		return err
 	}
+	defer f.Close()
 
-	return nil
+	_, err = f.WriteString(note.Format())
+	return err
 
 }

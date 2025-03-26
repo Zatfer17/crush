@@ -6,19 +6,20 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-	"encoding/json"
 	"sort"
 
 	"github.com/Zatfer17/zurg/internal/note"
+    "github.com/Zatfer17/zurg/internal/parser"
 )
 
 func List(basePath string, content string) ([]note.Note, error) {
+
     var notes []note.Note
     var files []string
 
     if content != "" {
 
-        cmd := exec.Command("grep", "-ril", content, "--include=*.json", basePath)
+        cmd := exec.Command("grep", "-ril", content, "--exclude-dir=.queries", "--include=*.md", basePath)
         output, err := cmd.Output()
         if err != nil {
             if exitError, ok := err.(*exec.ExitError); ok && exitError.ExitCode() == 1 {
@@ -30,7 +31,7 @@ func List(basePath string, content string) ([]note.Note, error) {
         files = strings.FieldsFunc(string(output), func(r rune) bool { return r == '\n' })
 
     } else {
-        pattern := fmt.Sprintf("%s/*.json", basePath)
+        pattern := fmt.Sprintf("%s/*.md", basePath)
         var err error
         files, err = filepath.Glob(pattern)
         if err != nil {
@@ -39,13 +40,13 @@ func List(basePath string, content string) ([]note.Note, error) {
     }
 
     for _, file := range files {
-        f, err := os.ReadFile(file)
+
+        fileContent, err := os.ReadFile(file)
         if err != nil {
             return nil, err
         }
 
-        var n note.Note
-        err = json.Unmarshal(f, &n)
+        n, err := parser.ParseNote(string(fileContent))
         if err != nil {
             return nil, err
         }
