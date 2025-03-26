@@ -1,7 +1,17 @@
-<p align="center">
-  <img src="https://static.wikia.nocookie.net/p__/images/3/30/Crush-FN.png/revision/latest?cb=20151105013143&path-prefix=protagonist" width="200" align="center"/>
-</p>
+<div class="mt-16 flex justify-center">
+    <div class="w-[48rem] overflow-hidden rounded-2xl">
+        <img src="docs/assets/screenshot.png" alt="Crush app interface" class="w-full h-auto">
+    </div>
+</div>
 
-# crush
+# 🐢 crush
+`crush` is a minimal note taking app in the terminal, inspired by Notational Velocity
 
-> Dude!
+## Get started
+- Create a config file `~/.config/crush/config.json`:
+```
+{
+  "defaultPath": "/Users/<your-username>/Documents/Crush"
+}
+```
+- Create the folder you just specified. Notes will be saved there.
