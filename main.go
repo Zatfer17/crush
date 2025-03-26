@@ -3,6 +3,7 @@ package main
 import (
     "fmt"
     "path/filepath"
+    "strings"
     "github.com/rivo/tview"
     "github.com/gdamore/tcell/v2"
 
@@ -51,6 +52,7 @@ func getNotes(cfg config.Config, searchText string, notesView *tview.List, noteV
 
     for _, note := range notes {
         preview := note.Content
+        preview = strings.Replace(preview, "\n", " ", -1)
         if len(preview) > 50 {
             preview = preview[:47] + "..."
         }
