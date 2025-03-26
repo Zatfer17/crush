@@ -5,7 +5,7 @@ import (
 	"hash/fnv"
     "fmt"
 
-	"github.com/Zatfer17/zurg/internal/note"
+	"github.com/Zatfer17/crush/internal/note"
 )
 
 func createHash(s string) string {

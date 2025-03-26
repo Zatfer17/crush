@@ -8,8 +8,8 @@ import (
 	"strings"
 	"sort"
 
-	"github.com/Zatfer17/zurg/internal/note"
-    "github.com/Zatfer17/zurg/internal/parser"
+	"github.com/Zatfer17/crush/internal/note"
+    "github.com/Zatfer17/crush/internal/parser"
 )
 
 func List(basePath string, content string) ([]note.Note, error) {

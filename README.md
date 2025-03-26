@@ -1,7 +1,7 @@
 <p align="center">
-  <img src="https://static.wikia.nocookie.net/toystory72/images/3/34/Evil_Emperor_Zurg.png/revision/latest?cb=20220105174135" width="200" align="center"/>
+  <img src="https://static.wikia.nocookie.net/p__/images/3/30/Crush-FN.png/revision/latest?cb=20151105013143&path-prefix=protagonist" width="200" align="center"/>
 </p>
 
-# zurg
+# crush
 
-Surrender Buzz Lightyear I have won!
+> Dude!

@@ -5,7 +5,7 @@ import (
     "os"
     "time"
 
-    "github.com/Zatfer17/zurg/internal/parser"
+    "github.com/Zatfer17/crush/internal/parser"
 )
 
 func Edit(basePath string, Id string, noteContent string) error {

@@ -1,4 +1,4 @@
-module github.com/Zatfer17/zurg
+module github.com/Zatfer17/crush
 
 go 1.24.1
 

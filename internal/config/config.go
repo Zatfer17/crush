@@ -16,7 +16,7 @@ func InitConfig() (*Config, error) {
 		return nil, err
 	}
 
-	configPath := filepath.Join(homePath, ".config/zurg/config.json")
+	configPath := filepath.Join(homePath, ".config/crush/config.json")
 
 	data, err := os.ReadFile(configPath)
 	if err != nil {

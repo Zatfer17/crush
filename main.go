@@ -7,8 +7,8 @@ import (
     "github.com/rivo/tview"
     "github.com/gdamore/tcell/v2"
 
-    "github.com/Zatfer17/zurg/internal/config"
-    "github.com/Zatfer17/zurg/pkg/core"
+    "github.com/Zatfer17/crush/internal/config"
+    "github.com/Zatfer17/crush/pkg/core"
 )
 
 func getCollections(cfg config.Config, collectionsView *tview.List, searchBar *tview.InputField) {
