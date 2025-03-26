@@ -1,19 +1,19 @@
 package main
 
 import (
+	"strings"
     "fmt"
-    "path/filepath"
-    "strings"
-    "github.com/rivo/tview"
-    "github.com/gdamore/tcell/v2"
+    "path"
+	"github.com/gdamore/tcell/v2"
+	"github.com/rivo/tview"
 
-    "github.com/Zatfer17/crush/internal/config"
-    "github.com/Zatfer17/crush/pkg/core"
+	"github.com/Zatfer17/crush/internal/config"
+    "github.com/Zatfer17/crush/internal/core"
 )
 
-func getCollections(cfg config.Config, collectionsView *tview.List, searchBar *tview.InputField) {
+func updateCollections(cfg config.Config, collectionsView *tview.List, searchBar *tview.InputField) {
 
-    fullPath := filepath.Join(cfg.DefaultPath, ".queries")
+    fullPath := path.Join(cfg.DefaultPath, ".queries")
 
     collectionsView.Clear()
 
@@ -41,7 +41,38 @@ func addCollection(cfg config.Config, query string) {
 
 }
 
-func getNotes(cfg config.Config, searchText string, notesView *tview.List, noteView *tview.TextArea) {
+func removeCollection(cfg config.Config, query string) {
+
+    fullPath := path.Join(cfg.DefaultPath, ".queries")
+
+    err := core.Remove(
+        fullPath,
+        query,
+    )
+    if err != nil {
+        panic(err)
+    }
+
+}
+
+func addNote(cfg config.Config, noteContent string, app *tview.Application, noteView *tview.TextArea) {
+
+    n, err := core.Add(
+        cfg.DefaultPath,
+        noteContent,
+    )
+    if err != nil {
+        panic(err)
+    }
+
+    noteView.SetTitle(n.Id)
+    noteView.SetText(n.Content, true)
+
+    app.SetFocus(noteView)
+
+}
+
+func updateNotes(cfg config.Config, searchText string, notesView *tview.List, noteView *tview.TextArea) {
 
     notesView.Clear()
 
@@ -63,23 +94,6 @@ func getNotes(cfg config.Config, searchText string, notesView *tview.List, noteV
     }
 }
 
-func addNote(cfg config.Config, noteContent string, app *tview.Application, noteView *tview.TextArea) {
-
-    n, err := core.Add(
-        cfg.DefaultPath,
-        noteContent,
-    )
-    if err != nil {
-        panic(err)
-    }
-
-    noteView.SetTitle(n.Id)
-    noteView.SetText(n.Content, true)
-
-    app.SetFocus(noteView)
-
-}
-
 func editNote(cfg config.Config, noteView *tview.TextArea) {
 
     err := core.Edit(
@@ -93,20 +107,20 @@ func editNote(cfg config.Config, noteView *tview.TextArea) {
 
 }
 
-func removeNote(cfg config.Config, noteView *tview.TextArea) {
+func removeNote(cfg config.Config, id string, noteView *tview.TextArea) {
 
-    if noteView.GetTitle() != "" {
-        err := core.Remove(
-            cfg.DefaultPath,
-            noteView.GetTitle(),
-        )
-        if err != nil {
-            panic(err)
-        }
-    
+    err := core.Remove(
+        cfg.DefaultPath,
+        id,
+    )
+    if err != nil {
+        panic(err)
+    }
+
+    if id == noteView.GetTitle() {
         noteView.SetTitle("")
         noteView.SetText("", true)
-    }
+    } 
 
 }
 
@@ -117,29 +131,33 @@ func main() {
         panic(err)
     }
 
-    // CREATE WIDGETS
-
     app := tview.NewApplication()
-
-    searchBar := tview.NewInputField()
-    searchBar.SetLabel("Search: ")
-    searchBar.SetBorder(true)
 
     collectionsView := tview.NewList()
     collectionsView.SetBorder(true)
     collectionsView.SetTitle("Collections")
     collectionsView.ShowSecondaryText(false)
 
+    noteView := tview.NewTextArea()
+    noteView.SetBorder(true)
+
     notesView := tview.NewList()
     notesView.SetBorder(true)
     notesView.SetTitle("Notes")
     notesView.ShowSecondaryText(false)
 
-    noteView := tview.NewTextArea()
-    noteView.SetBorder(true)
+    searchBar := tview.NewInputField()
+    searchBar.SetLabel("Search: ")
+    searchBar.SetBorder(true)
+    searchBar.SetChangedFunc(func(searchText string) {
+        updateNotes(*cfg, searchText, notesView, noteView)
+    })
+    searchBar.SetDoneFunc(func(key tcell.Key){
+        addNote(*cfg, searchBar.GetText(), app, noteView)
+        updateNotes(*cfg, searchBar.GetText(), notesView, noteView)
+    })
 
     footer := tview.NewTextView()
-    footer.SetText("CTRL-N New • CTRL-K Search • CTRL-S Save • CTRL-W Save query • SHIFT-DEL Delete")
     footer.SetTextAlign(tview.AlignCenter)
     footer.SetBorder(true)
 
@@ -157,72 +175,91 @@ func main() {
     grid.AddItem(notesView, 1, 2, 5, 3, 0, 150, false)
     grid.AddItem(noteView, 1, 5, 5, 5, 0, 150, false)
 
-    // ASSIGN SHORTCUTS
-
     app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
         switch event.Key() {
             case tcell.KeyTab:
                 if searchBar.HasFocus() {
                     app.SetFocus(collectionsView)
+                    footer.SetText("CTRL-K Search • CTRL-S Save • DEL Delete")
                 } else if collectionsView.HasFocus() {
                     app.SetFocus(notesView)
+                    footer.SetText("CTRL-N New • CTRL-K Search • DEL Delete")
                 } else if notesView.HasFocus() {
                     app.SetFocus(noteView)
+                    footer.SetText("CTRL-N New • CTRL-K Search • CTRL-S Save • DEL Delete")
                 } else {
                     app.SetFocus(searchBar)
+                    footer.SetText("CTRL-N New • CTRL-S Save")
                 }
                 return nil
             case tcell.KeyBacktab:
                 if searchBar.HasFocus() {
                     app.SetFocus(noteView)
+                    footer.SetText("CTRL-N New • CTRL-K Search • CTRL-S Save • DEL Delete")
                 } else if collectionsView.HasFocus() {
                     app.SetFocus(searchBar)
+                    footer.SetText("CTRL-N New • CTRL-S Save")
                 } else if notesView.HasFocus() {
                     app.SetFocus(collectionsView)
+                    footer.SetText("CTRL-K Search • CTRL-S Save • DEL Delete")
                 } else {
                     app.SetFocus(notesView)
+                    footer.SetText("CTRL-N New • CTRL-K Search • DEL Delete")
                 } 
                 return nil
             case tcell.KeyCtrlK:
                 app.SetFocus(searchBar)
                 return nil
             case tcell.KeyCtrlN:
-                addNote(*cfg, "", app, noteView)
-                getNotes(*cfg, searchBar.GetText(), notesView, noteView)
+                if app.GetFocus() != collectionsView{
+                    addNote(*cfg, "", app, noteView)
+                    updateNotes(*cfg, searchBar.GetText(), notesView, noteView)
+                }
                 return nil
             case tcell.KeyCtrlS:
-                editNote(*cfg, noteView)
-                getNotes(*cfg, searchBar.GetText(), notesView, noteView)
-                return nil
-            case tcell.KeyCtrlW:
-                addCollection(*cfg, searchBar.GetText())
-                getCollections(*cfg, collectionsView, searchBar)
+                if app.GetFocus() == searchBar || app.GetFocus() == collectionsView {
+                    if searchBar.GetText() != "" {
+                        addCollection(*cfg, searchBar.GetText())
+                        updateCollections(*cfg, collectionsView, searchBar)
+                    }
+                } else if app.GetFocus() == noteView {
+                    if noteView.GetTitle() != "" {
+                        editNote(*cfg, noteView)
+                        updateNotes(*cfg, searchBar.GetText(), notesView, noteView)
+                    }
+                }
                 return nil
             case tcell.KeyDelete:
-                if event.Modifiers()&tcell.ModShift != 0 {
-                    removeNote(*cfg, noteView)
-                    getNotes(*cfg, searchBar.GetText(), notesView, noteView)
-                    return nil
+                if app.GetFocus() == collectionsView {
+                    fullPath := path.Join(cfg.DefaultPath, ".queries")
+                    collections, err := core.List(fullPath, "")
+                    if err != nil {
+                        panic(err)
+                    }
+                    selectedCollection := collections[collectionsView.GetCurrentItem()]
+                    removeCollection(*cfg, selectedCollection.Id)
+                    updateCollections(*cfg, collectionsView, searchBar)
+                } else if app.GetFocus() == notesView {
+                    notes, err := core.List(cfg.DefaultPath, searchBar.GetText())
+                    if err != nil {
+                        panic(err)
+                    }
+                    selectedNote := notes[notesView.GetCurrentItem()]
+                    removeNote(*cfg, selectedNote.Id, noteView)
+                    updateNotes(*cfg, searchBar.GetText(), notesView, noteView)
+                } else if app.GetFocus() == noteView {
+                    removeNote(*cfg, noteView.GetTitle(), noteView)
+                    updateNotes(*cfg, searchBar.GetText(), notesView, noteView)
                 }
+                return nil
         }
         return event
     })
 
-    // ASSIGN FUNCTIONALITY
+    updateCollections(*cfg, collectionsView, searchBar)
+    updateNotes(*cfg, "", notesView, noteView)
 
-    searchBar.SetChangedFunc(func(searchText string) {
-        getNotes(*cfg, searchText, notesView, noteView)
-    })
-
-    searchBar.SetDoneFunc(func(key tcell.Key){
-        addNote(*cfg, searchBar.GetText(), app, noteView)
-        getNotes(*cfg, searchBar.GetText(), notesView, noteView)
-    })
-
-    getCollections(*cfg, collectionsView, searchBar)
-    getNotes(*cfg, "", notesView, noteView)
-
-    if err := app.SetRoot(grid, true).EnableMouse(true).Run(); err != nil {
+    if err := app.SetRoot(grid, true).EnableMouse(true).SetFocus(searchBar).Run(); err != nil {
         panic(err)
     }
 

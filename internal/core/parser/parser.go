@@ -4,7 +4,8 @@ import (
 	"strings"
 	"fmt"
 	"github.com/adrg/frontmatter"
-	"github.com/Zatfer17/crush/internal/note"
+	
+	"github.com/Zatfer17/crush/internal/core/note"
 )
 
 func ParseNote(content string) (note.Note, error) {

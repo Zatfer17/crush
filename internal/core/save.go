@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"os"
 
-	"github.com/Zatfer17/crush/internal/note"
+	"github.com/Zatfer17/crush/internal/core/note"
 )
 
 func Save(basePath string, query string) (note.Note, error) {
