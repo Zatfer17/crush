@@ -43,3 +43,6 @@ In the note view you can:
 - `CTRL-K` to focus the search bar
 - `CTRL-S` to save the current note
 - `DEL` to delete the current note
+
+## Trivia
+The name comes from [Crush](https://disney.fandom.com/wiki/Crush), the chill turtle from Finding Nemo.
