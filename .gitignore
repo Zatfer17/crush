@@ -27,3 +27,5 @@ go.work.sum
 build/
 # Added by goreleaser init:
 dist/
+
+migrate/
