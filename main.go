@@ -160,6 +160,7 @@ func main() {
     footer := tview.NewTextView()
     footer.SetTextAlign(tview.AlignCenter)
     footer.SetBorder(true)
+    footer.SetText("CTRL-N New • CTRL-S Save")
 
     grid := tview.NewGrid()
     grid.SetRows(3, 0, 0, 0, 0, 0, 3)
