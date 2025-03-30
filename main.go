@@ -6,10 +6,44 @@ import (
     "path"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+    "os"
+    "os/exec"
 
 	"github.com/Zatfer17/crush/internal/config"
     "github.com/Zatfer17/crush/internal/core"
 )
+
+func pullAndPushRepo(repoPath string) {
+
+    err := os.Chdir(repoPath)
+    if err != nil {
+        panic(fmt.Sprintf("Failed to change directory: %v", err))
+    }
+
+    pullCmd := exec.Command("git", "pull", "origin", "main")
+    pullOutput, err := pullCmd.CombinedOutput()
+    if err != nil {
+        panic(fmt.Sprintf("Failed to pull: %v\n%s", err, pullOutput))
+    }
+
+    addCmd := exec.Command("git", "add", ".")
+    addOutput, err := addCmd.CombinedOutput()
+    if err != nil {
+        panic(fmt.Sprintf("Failed to add changes: %v\n%s", err, addOutput))
+    }
+
+    commitCmd := exec.Command("git", "commit", "-m", "Auto-commit: Updated changes")
+    commitOutput, err := commitCmd.CombinedOutput()
+    if err != nil && !strings.Contains(string(commitOutput), "nothing to commit") {
+        panic(fmt.Sprintf("Failed to commit: %v\n%s", err, commitOutput))
+    }
+
+    pushCmd := exec.Command("git", "push", "origin", "main")
+    pushOutput, err := pushCmd.CombinedOutput()
+    if err != nil {
+        panic(fmt.Sprintf("Failed to push: %v\n%s", err, pushOutput))
+    }
+}
 
 func updateCollections(cfg config.Config, collectionsView *tview.List, searchBar *tview.InputField) {
 
@@ -153,8 +187,17 @@ func main() {
         updateNotes(*cfg, searchText, notesView, noteView)
     })
     searchBar.SetDoneFunc(func(key tcell.Key){
-        addNote(*cfg, searchBar.GetText(), app, noteView)
-        updateNotes(*cfg, searchBar.GetText(), notesView, noteView)
+        notes, err := core.List(cfg.DefaultPath, searchBar.GetText())
+        if err != nil {
+            panic(err)
+        }
+
+        if len(notes) > 0 {
+            app.SetFocus(notesView)
+        } else {
+            addNote(*cfg, searchBar.GetText(), app, noteView)
+            updateNotes(*cfg, searchBar.GetText(), notesView, noteView)
+        }
     })
 
     footer := tview.NewTextView()
@@ -181,31 +224,31 @@ func main() {
             case tcell.KeyTab:
                 if searchBar.HasFocus() {
                     app.SetFocus(collectionsView)
-                    footer.SetText("CTRL-K Search • CTRL-S Save • DEL Delete")
+                    footer.SetText("CTRL-K Search • CTRL-S Save • DEL Delete • CTRL-P Sync")
                 } else if collectionsView.HasFocus() {
                     app.SetFocus(notesView)
-                    footer.SetText("CTRL-N New • CTRL-K Search • DEL Delete")
+                    footer.SetText("CTRL-N New • CTRL-K Search • DEL Delete • CTRL-P Sync")
                 } else if notesView.HasFocus() {
                     app.SetFocus(noteView)
-                    footer.SetText("CTRL-N New • CTRL-K Search • CTRL-S Save • DEL Delete")
+                    footer.SetText("CTRL-N New • CTRL-K Search • CTRL-S Save • DEL Delete • CTRL-P Sync")
                 } else {
                     app.SetFocus(searchBar)
-                    footer.SetText("CTRL-N New • CTRL-S Save")
+                    footer.SetText("CTRL-N New • CTRL-S Save • CTRL-P Sync")
                 }
                 return nil
             case tcell.KeyBacktab:
                 if searchBar.HasFocus() {
                     app.SetFocus(noteView)
-                    footer.SetText("CTRL-N New • CTRL-K Search • CTRL-S Save • DEL Delete")
+                    footer.SetText("CTRL-N New • CTRL-K Search • CTRL-S Save • DEL Delete • CTRL-P Sync")
                 } else if collectionsView.HasFocus() {
                     app.SetFocus(searchBar)
-                    footer.SetText("CTRL-N New • CTRL-S Save")
+                    footer.SetText("CTRL-N New • CTRL-S Save • CTRL-P Sync")
                 } else if notesView.HasFocus() {
                     app.SetFocus(collectionsView)
-                    footer.SetText("CTRL-K Search • CTRL-S Save • DEL Delete")
+                    footer.SetText("CTRL-K Search • CTRL-S Save • DEL Delete • CTRL-P Sync")
                 } else {
                     app.SetFocus(notesView)
-                    footer.SetText("CTRL-N New • CTRL-K Search • DEL Delete")
+                    footer.SetText("CTRL-N New • CTRL-K Search • DEL Delete • CTRL-P Sync")
                 } 
                 return nil
             case tcell.KeyCtrlK:
@@ -252,6 +295,9 @@ func main() {
                     removeNote(*cfg, noteView.GetTitle(), noteView)
                     updateNotes(*cfg, searchBar.GetText(), notesView, noteView)
                 }
+                return nil
+            case tcell.KeyCtrlP: // CTRL+P for pull and push
+                pullAndPushRepo(cfg.DefaultPath)
                 return nil
         }
         return event
