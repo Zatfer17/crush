@@ -24,12 +24,14 @@ In the search bar you can:
 - `ENTER` to create a new note with the current search query as content
 - `CTRL-N` to create a new empty note
 - `CTRL-S` to save the current search query as a collection
+- `CTRL-P` to sync with Github
 
 ### Collections view
 In the collections view you can:
 - `ENTER` to load the selected collection
 - `CTRL-S` to save the current search query as a collection
 - `DEL` to delete the selected collection
+- `CTRL-P` to sync with Github
 
 ### Notes view
 In the notes view you can:
@@ -37,6 +39,7 @@ In the notes view you can:
 - `CTRL-N` to create a new empty note
 - `CTRL-K` to focus the search bar
 - `DEL` to delete the selected note
+- `CTRL-P` to sync with Github
 
 ### Note view
 In the note view you can:
@@ -44,6 +47,7 @@ In the note view you can:
 - `CTRL-K` to focus the search bar
 - `CTRL-S` to save the current note
 - `DEL` to delete the current note
+- `CTRL-P` to sync with Github
 
 ## Trivia
 The name comes from [Crush](https://disney.fandom.com/wiki/Crush), the chill turtle from Finding Nemo.
