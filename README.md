@@ -16,7 +16,8 @@ The app has 4 widgets:
 - a collection view, to show saved search queries;
 - a notes view, to show notes;
 - a note view, to edit notes.
-Depending on the focused tutorial different shortcuts will be available.
+
+Depending on the focused widget, different shortcuts will be available.
 
 ### Search bar
 In the search bar you can:
